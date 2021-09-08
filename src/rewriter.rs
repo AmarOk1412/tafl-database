@@ -1,4 +1,5 @@
 use crate::enums::{Player, Rotate, Variant};
+use crate::game::Game;
 
 use regex::Regex;
 use std::mem;
@@ -29,8 +30,8 @@ impl Action {
 }
 
 impl Rewriter {
-    pub fn new(variant: Variant, body: String) -> Vec<Action> {
-        let mut actions : Vec<&str> = body.split('\n').collect();
+    pub fn new(game: &Game) -> Vec<Action> {
+        let mut actions : Vec<&str> = game.moves.split('\n').collect();
         let mut result = Vec::new();
         if actions.len() == 0 {
             return result;
@@ -44,6 +45,7 @@ impl Rewriter {
     }
 
     fn parse(action: &str, rotation: &Rotate) -> Action {
+        // TODO 3.json
         let re = Regex::new(r"([A-Z]+[0-9]+)-([A-Z]+[0-9]+)x?([A-Z]+[0-9]+)?(\+\+)?$").unwrap();
         let cap = re.captures(action).unwrap();
         let from = String::from(cap.get(1).map_or("", |m| m.as_str()));
@@ -66,14 +68,15 @@ impl Rewriter {
     fn rotation(action: &str) -> Rotate {
         let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         let action = Rewriter::parse(action, &Rotate::Zero);
-        let x = alphabet.find(action.from.chars().nth(0).unwrap()).unwrap();
+        let x = alphabet.find(action.from.chars().nth(0).unwrap()).unwrap() + 1;
         let y = action.from[1..].parse::<usize>().unwrap();
         let mid = 6; // TODO from variant
+        // TODO G2_C2????
         if x <= mid && y < mid {
             return Rotate::Zero;
         } else if x > mid && y <= mid {
             return Rotate::Ninety;
-        } else if x >= mid && y < mid {
+        } else if x >= mid && y > mid {
             return Rotate::OneHundredEighty;
         }
         return Rotate::TwoHundredSeventy;
