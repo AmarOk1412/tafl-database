@@ -17,4 +17,6 @@ fn main() {
     let database = Database::new(gl);
     let stats = database.stats(Variant::OldHnefatafl);
     println!("{}", stats);
+    let stats = database.stats(Variant::LegacyHnefatafl);
+    println!("{}", stats);
 }
