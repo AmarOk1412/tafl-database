@@ -1,6 +1,6 @@
 use crate::rewriter::{Action, Rewriter};
 use crate::game::{Game, GameLoader};
-use crate::enums::{Variant};
+use crate::enums::{Player, Variant};
 
 use rmps::{Deserializer, Serializer};
 use serde::{Deserialize, Serialize};
@@ -81,7 +81,7 @@ impl Database {
         for possibility in &self.possibilities {
             let mut buf = Vec::new();
             possibility.1.serialize(&mut Serializer::new(&mut buf)).unwrap();
-            let dir = format!("data/{}", possibility.0);
+            let dir = format!("data/out/{}", possibility.0);
             let path = format!("{}/{}_{}.pk", dir, possibility.1.action.from, possibility.1.action.dest);
             fs::create_dir_all(dir);
             fs::write(path, buf);
@@ -90,30 +90,38 @@ impl Database {
 
     pub fn stats(&self, variant: Variant) -> String {
         let mut result = String::new();
-        let mut coups: Vec<(usize, String)> = Vec::new();
+        let mut coups: Vec<(usize, String, f32, f32)> = Vec::new();
         // TODO victories
         for possibility in &self.possibilities {
             if possibility.0 == variant {
-                let used = Database::tree_size(&possibility.1);
+                let stats = Database::tree_stats(&possibility.1);
+                let used = stats.len();
+                let white_victory = stats.iter().filter(|&p| *p == Player::White).count();
+                let black_victory = stats.iter().filter(|&p| *p == Player::Black).count();
+                let percentw = white_victory as f32 / used as f32;
+                let percentb = black_victory as f32 / used as f32;
                 let id = format!("{}_{}", possibility.1.action.from, possibility.1.action.dest);
-                coups.push((used, id));
+                coups.push((used, id, percentw, percentb));
             }
         }
         coups.sort_by_key(|k| k.0);
         result += &*format!("For variant: {}\n", variant);
         for coup in coups {
-            result += &*format!("{}, occurence: {}\n", coup.1, coup.0);
+            result += &*format!("{}, occurence: {} (victory: white {} / black {})\n", coup.1, coup.0, coup.2, coup.3);
         }
         result
     }
 
-    fn tree_size(node: &Node) -> usize {
+    fn tree_stats(node: &Node) -> Vec<Player> {
+        let mut result : Vec<Player> = Vec::new();
         if node.next.is_empty() {
-            return 1;
+            if node.action.won.is_some(){
+                result.push(node.action.won.clone().unwrap());
+            }
+            return result;
         }
-        let mut result = 0;
         for n in &node.next {
-            result += Database::tree_size(n);
+            result.append(&mut Database::tree_stats(n));
         }
         result
     }

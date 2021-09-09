@@ -15,7 +15,7 @@ pub struct Action {
     pub from: String,
     pub dest: String,
     pub take: String,
-    pub won: bool
+    pub won: Option<Player>
 }
 
 impl Action {
@@ -24,7 +24,7 @@ impl Action {
             from: String::new(),
             dest: String::new(),
             take: String::new(),
-            won: false
+            won: None
         }
     }
 }
@@ -37,8 +37,11 @@ impl Rewriter {
             return result;
         }
         let rotation = Rewriter::rotation(actions.get(0).unwrap());
-        for action in actions {
-            let act = Rewriter::parse(action, &rotation);
+        for idx in 0..actions.len() {
+            let mut act = Rewriter::parse(actions[0], &rotation);
+            if idx== actions.len() - 1 {
+                act.won = Some(game.winner.clone());
+            }
             result.push(act);
         }
         result
@@ -56,12 +59,12 @@ impl Rewriter {
         if take.len() != 0 {
             take = Rewriter::rotate(take, &rotation);
         }
-        let won = cap.get(4).map_or("", |m| m.as_str()) == "++";
+        //let won = cap.get(4).map_or("", |m| m.as_str()) == "++";
         Action {
             from,
             dest,
             take,
-            won
+            won: None
         }
     }
 
@@ -87,12 +90,11 @@ impl Rewriter {
             return square;
         }
         let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        let mut x = alphabet.find(square.chars().nth(0).unwrap()).unwrap();
+        let mut x = alphabet.find(square.chars().nth(0).unwrap()).unwrap() + 1;
         let mut y = square[1..].parse::<usize>().unwrap();
 
         let mut result = String::new();
         let mut size = 11; // TODO variant
-
         if rotation != &Rotate::OneHundredEighty {
             let fx = y;
             y = size - x;

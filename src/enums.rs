@@ -1,3 +1,5 @@
+use rmps::{Deserializer, Serializer};
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -15,6 +17,7 @@ impl fmt::Display for Variant {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub enum Player {
     White,
     Black

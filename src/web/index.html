@@ -1,0 +1,75 @@
+<html>
+<style>
+#app {
+  box-sizing: border-box;
+}
+
+#left {
+  float: left;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#right {
+  float: left;
+  width: 50%;
+  height: 100%;
+}
+
+#monitorgame {
+    width: 50%;
+    height: 50%;
+}
+
+#board {
+    width: 100%;
+    height: 100%;
+    border: 1px solid grey;
+}
+
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+</style>
+
+<div id="app">
+    <div id="left">
+        <div id="monitorgame">
+            <div id="board">
+
+            </div>
+            <div>Variant/Play/Pause/Restart</div>
+        </div>
+    </div>
+
+    <div id="right">
+        <table>
+            <tr>
+                <th>Moves</th>
+                <th>Count</th>
+                <th>Victories</th>
+            </tr>
+            <tr>
+                <td>F2-F3</td>
+                <td>5</td>
+                <td>40% white</td>
+            </tr>
+        </table>
+    </div>
+</div>
+</html>
