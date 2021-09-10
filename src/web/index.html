@@ -27,7 +27,6 @@
 #board {
     width: 100%;
     height: 100%;
-    border: 1px solid grey;
 }
 
 table {
@@ -44,6 +43,51 @@ td, th {
 
 tr:nth-child(even) {
   background-color: #dddddd;
+}
+
+.row {
+  width: 100%;
+  display: flex;
+  height: 9%;
+}
+
+.square {
+  border: 1px solid grey;
+  width: 9%;
+  background: #eee;
+}
+
+.base {
+  background: red;
+}
+
+.white {
+  background: white;
+  width: 80%;
+  height: 80%;
+  margin: auto;
+  margin-top: 10%;
+  border-radius: 50%;
+  border: 1px solid black;
+}
+
+.black {
+  background: black;
+  width: 80%;
+  height: 80%;
+  margin: auto;
+  margin-top: 10%;
+  border-radius: 50%;
+}
+
+.king {
+  background: white;
+  width: 80%;
+  height: 80%;
+  margin: auto;
+  margin-top: 10%;
+  border-radius: 50%;
+  border: 1px solid black;
 }
 </style>
 
@@ -72,4 +116,76 @@ tr:nth-child(even) {
         </table>
     </div>
 </div>
+
+<script>
+var board = document.getElementById("board");
+var size = 11;
+
+const old_hnefatafl = [
+  'B', ' ', ' ', 'P', 'P', 'P',  'P', 'P', ' ', ' ', 'B',
+  ' ', ' ', ' ', ' ', ' ', 'P',  ' ', ' ', ' ', ' ', ' ',
+  ' ', ' ', ' ', ' ', ' ', ' ',  ' ', ' ', ' ', ' ', ' ',
+  'P', ' ', ' ', ' ', ' ', 'W',  ' ', ' ', ' ', ' ', 'P',
+  'P', ' ', ' ', ' ', 'W', 'W',  'W', ' ', ' ', ' ', 'P',
+  'P', 'P', ' ', 'W', 'W', 'KB', 'W', 'W', ' ', 'P', 'P',
+  'P', ' ', ' ', ' ', 'W', 'W',  'W', ' ', ' ', ' ', 'P',
+  'P', ' ', ' ', ' ', ' ', 'W',  ' ', ' ', ' ', ' ', 'P',
+  ' ', ' ', ' ', ' ', ' ', ' ',  ' ', ' ', ' ', ' ', ' ',
+  ' ', ' ', ' ', ' ', ' ', 'P',  ' ', ' ', ' ', ' ', ' ',
+  'B', ' ', ' ', 'P', 'P', 'P',  'P', 'P', ' ', ' ', 'B'
+]
+const legacy_hnefatafl = old_hnefatafl;
+const copenhagen_hnefatafl = old_hnefatafl;
+const historical_hnefatafl = [
+  ' ', ' ', ' ', ' ', 'P', 'P', 'P', ' ', ' ', ' ', ' ',
+  ' ', ' ', ' ', ' ', 'P', ' ', 'P', ' ', ' ', ' ', ' ',
+  ' ', ' ', ' ', ' ', ' ', 'P', ' ', ' ', ' ', ' ', ' ',
+  ' ', ' ', ' ', ' ', ' ', 'W', ' ', ' ', ' ', ' ', ' ',
+  'P', 'P', ' ', ' ', 'W', 'W', 'W', ' ', ' ', 'P', 'P',
+  'P', ' ', 'P', 'W', 'W', 'K', 'W', 'W', 'P', ' ', 'P',
+  'P', 'P', ' ', ' ', 'W', 'W', 'W', ' ', ' ', 'P', 'P',
+  ' ', ' ', ' ', ' ', ' ', 'W', ' ', ' ', ' ', ' ', ' ',
+  ' ', ' ', ' ', ' ', ' ', 'P', ' ', ' ', ' ', ' ', ' ',
+  ' ', ' ', ' ', ' ', 'P', ' ', 'P', ' ', ' ', ' ', ' ',
+  ' ', ' ', ' ', ' ', 'P', 'P', 'P', ' ', ' ', ' ', ' '
+]
+
+function fillBoard() {
+  for (var y = 0; y < size; ++y) {
+    var row = document.createElement("div");
+    row.className = "row";
+    for (var x = 0; x < size; ++x) {
+      var model = old_hnefatafl[y*11+x]
+      var square = document.createElement("div");
+      var bonus = ''
+      if (model.indexOf('B') != -1) {
+        bonus += 'base';
+      }
+      square.className = `square square_${x}_${y} ${bonus}`;
+      if (model.indexOf('W') != -1) {
+        var white = document.createElement("div");
+        white.className = "white";
+        square.appendChild(white);
+      } else if (model.indexOf('P') != -1) {
+        var black = document.createElement("div");
+        black.className = "black";
+        square.appendChild(black);
+      } else if (model.indexOf('K') != -1) {
+        var king = document.createElement("div");
+        king.className = "king";
+        square.appendChild(king);
+      }
+      row.appendChild(square);
+    }
+    board.appendChild(row);
+  }
+}
+
+function execute_action(action) {
+
+}
+
+fillBoard();
+
+</script>
 </html>
