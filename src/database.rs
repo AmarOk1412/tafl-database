@@ -1,6 +1,6 @@
 use crate::rewriter::{Action, Rewriter};
 use crate::game::{Game, GameLoader};
-use crate::enums::{Player, Variant};
+use crate::enums::{Player, Rotate, Variant};
 
 use rmps::{Deserializer, Serializer};
 use serde::{Deserialize, Serialize};
@@ -30,10 +30,10 @@ impl Database {
         db
     }
 
-    fn add_game(&mut self, game: &Game) {
+    pub fn add_game(&mut self, game: &Game) {
         let variant = game.variant.clone();
-        let game = Rewriter::new(game);
-        let game = Database::to_tree(game);
+        let rw = Rewriter::new(game);
+        let game = Database::to_tree(rw.actions);
         let position = self.possibilities.iter().position(|po| po.0 == variant && po.1.action == game.action);
         if position.is_none() {
             self.possibilities.push((variant, game));
@@ -77,7 +77,7 @@ impl Database {
         result
     }
 
-    fn save(&self) {
+    pub fn save(&self) {
         for possibility in &self.possibilities {
             let mut buf = Vec::new();
             possibility.1.serialize(&mut Serializer::new(&mut buf)).unwrap();
@@ -86,6 +86,72 @@ impl Database {
             fs::create_dir_all(dir);
             fs::write(path, buf);
         }
+    }
+
+    pub fn search(&mut self, variant: Variant, moves: String) -> String {
+        let game = Game {
+            id: String::new(),
+            variant: variant.clone(),
+            white: String::new(),
+            black: String::new(),
+            winner: None,
+            moves
+        };
+        let rw = Rewriter::new(&game);
+        let invert_rotate = match rw.rotation {
+            Rotate::Zero => Rotate::Zero,
+            Rotate::Ninety => Rotate::TwoHundredSeventy,
+            Rotate::TwoHundredSeventy => Rotate::Ninety,
+            Rotate::OneHundredEighty => Rotate::OneHundredEighty,
+        };
+        let mut game = Database::to_tree(rw.actions);
+
+        for possibility in &mut self.possibilities {
+            if possibility.0 == variant && possibility.1.action == game.action {
+                let mut current_node = &mut game;
+                let mut current_search_node = &mut possibility.1;
+                loop {
+                    let mut continue_search = false;
+                    if current_node.next.len() == 0 {
+                        break;
+                    }
+                    for n in 0..current_search_node.next.len() {
+                        if current_search_node.next[n].action == current_node.next[0].action {
+                            continue_search = true;
+                            current_search_node = &mut current_search_node.next[n];
+                            current_node = &mut current_node.next[0];
+                            break;
+                        }
+                    }
+                    if !continue_search {
+                        break;
+                    }
+                }
+
+                if current_node.next.len() == 0 {
+                    // Search ended
+                    //TODO construct json object via serde?
+                    let mut result = String::from("[");
+                    for next_coup in &current_search_node.next {
+                        let stats = Database::tree_stats(&next_coup);
+                        let used = stats.len();
+                        let white_victory = stats.iter().filter(|&p| *p == Player::White).count();
+                        let black_victory = stats.iter().filter(|&p| *p == Player::Black).count();
+                        let percentw = white_victory as f32 / used as f32;
+                        let percentb = black_victory as f32 / used as f32;
+                        let rotated = Rewriter::rotate_action(&next_coup.action, &invert_rotate);
+                        let id = format!("{}-{}", rotated.from, rotated.dest);
+                        result += &*format!("{{\"id\":\"{}\",\"count\":{},\"whiteWin\":{},\"blackWin\":{} }},", id, used, percentw, percentb);
+                    }
+                    if result != "[" {
+                        result.pop();
+                    }
+                    result += "]";
+                    return result;
+                }
+            }
+        }
+        String::from("{}")
     }
 
     pub fn stats(&self, variant: Variant) -> String {

@@ -7,7 +7,8 @@ use rmps::{Deserializer, Serializer};
 use serde::{Deserialize, Serialize};
 
 pub struct Rewriter {
-
+    pub actions: Vec<Action>,
+    pub rotation: Rotate,
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -30,20 +31,33 @@ impl Action {
 }
 
 impl Rewriter {
-    pub fn new(game: &Game) -> Vec<Action> {
+    pub fn new(game: &Game) -> Self {
         let mut actions : Vec<&str> = game.moves.split('\n').collect();
         let mut result = Vec::new();
         if actions.len() == 0 {
-            return result;
+            return Self {
+                actions: result,
+                rotation: Rotate::Zero
+            }
         }
         let rotation = Rewriter::rotation(actions.get(0).unwrap());
         for idx in 0..actions.len() {
-            let mut act = Rewriter::parse(actions[0], &rotation);
-            if idx== actions.len() - 1 {
-                act.won = Some(game.winner.clone());
+            let mut act = Rewriter::parse(actions[idx], &rotation);
+            if idx == actions.len() - 1 {
+                act.won = game.winner.clone();
             }
             result.push(act);
         }
+        Self {
+            actions: result,
+            rotation
+        }
+    }
+
+    pub fn rotate_action(action: &Action, rotation: &Rotate) -> Action {
+        let mut result = action.clone();
+        result.from = Self::rotate(result.from, &rotation);
+        result.dest = Self::rotate(result.dest, &rotation);
         result
     }
 
