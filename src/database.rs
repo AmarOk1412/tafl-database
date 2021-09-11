@@ -107,7 +107,7 @@ impl Database {
         let mut game = Database::to_tree(rw.actions);
 
         for possibility in &mut self.possibilities {
-            if possibility.0 == variant && possibility.1.action == game.action {
+            if possibility.0 == variant && (possibility.1.action == game.action || game.action.from == "") {
                 let mut current_node = &mut game;
                 let mut current_search_node = &mut possibility.1;
                 loop {

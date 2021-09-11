@@ -15,7 +15,7 @@ pub struct Rewriter {
 pub struct Action {
     pub from: String,
     pub dest: String,
-    pub take: String,
+    pub take: Vec<String>,
     pub won: Option<Player>
 }
 
@@ -24,7 +24,7 @@ impl Action {
         Action {
             from: String::new(),
             dest: String::new(),
-            take: String::new(),
+            take: Vec::new(),
             won: None
         }
     }
@@ -34,7 +34,7 @@ impl Rewriter {
     pub fn new(game: &Game) -> Self {
         let mut actions : Vec<&str> = game.moves.split('\n').collect();
         let mut result = Vec::new();
-        if actions.len() == 0 {
+        if actions.len() == 0 || game.moves == "" {
             return Self {
                 actions: result,
                 rotation: Rotate::Zero
@@ -62,18 +62,18 @@ impl Rewriter {
     }
 
     fn parse(action: &str, rotation: &Rotate) -> Action {
-        // TODO 3.json
-        let re = Regex::new(r"([A-Z]+[0-9]+)-([A-Z]+[0-9]+)x?([A-Z]+[0-9]+)?(\+\+)?$").unwrap();
+        let re = Regex::new(r"([A-Z]+[0-9]+)-([A-Z]+[0-9]+)x?([A-Z0-9/]*)(\+\+)?$").unwrap();
         let cap = re.captures(action).unwrap();
         let from = String::from(cap.get(1).map_or("", |m| m.as_str()));
         let from = Rewriter::rotate(from, &rotation);
         let dest = String::from(cap.get(2).map_or("", |m| m.as_str()));
         let dest = Rewriter::rotate(dest, &rotation);
-        let mut take = String::from(cap.get(3).map_or("", |m| m.as_str()));
-        if take.len() != 0 {
-            take = Rewriter::rotate(take, &rotation);
+        let mut take = Vec::new();
+        let takes = String::from(cap.get(3).map_or("", |m| m.as_str()));
+        if takes != "++" && takes != "" {
+            take = takes.split('/').map(|s| s.to_string()).collect();
         }
-        //let won = cap.get(4).map_or("", |m| m.as_str()) == "++";
+
         Action {
             from,
             dest,
