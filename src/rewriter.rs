@@ -2,6 +2,7 @@ use crate::enums::{Player, Rotate, Variant};
 use crate::game::Game;
 
 use regex::Regex;
+use std::fmt;
 use std::mem;
 use rmps::{Deserializer, Serializer};
 use serde::{Deserialize, Serialize};
@@ -29,6 +30,27 @@ impl Action {
         }
     }
 }
+
+impl fmt::Display for Action {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut take = String::new();
+        let mut won = String::new();
+        if self.take.len() > 0 {
+            take += "x";
+            for i in 0..self.take.len() {
+                if i != 0 {
+                    take += "/";
+                }
+                take += &self.take[i];
+            }
+        }
+        if self.won.is_some() {
+            won = String::from("++");
+        }
+        write!(f, "{}-{}{}{}", self.from, self.dest, take, won)
+    }
+}
+
 
 impl Rewriter {
     pub fn new(game: &Game) -> Self {

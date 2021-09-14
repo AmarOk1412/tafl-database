@@ -106,10 +106,22 @@ impl Database {
         };
         let mut game = Database::to_tree(rw.actions);
 
+        let mut result = String::from("[");
         for possibility in &mut self.possibilities {
             if possibility.0 == variant && (possibility.1.action == game.action || game.action.from == "") {
                 let mut current_node = &mut game;
                 let mut current_search_node = &mut possibility.1;
+                if current_node.action.from == "" {
+                    let stats = Database::tree_stats(&current_search_node);
+                    let used = stats.len();
+                    let white_victory = stats.iter().filter(|&p| *p == Player::White).count();
+                    let black_victory = stats.iter().filter(|&p| *p == Player::Black).count();
+                    let percentw = white_victory as f32 / used as f32;
+                    let percentb = black_victory as f32 / used as f32;
+                    let rotated = Rewriter::rotate_action(&current_search_node.action, &invert_rotate);
+                    result += &*format!("{{\"id\":\"{}\",\"count\":{},\"whiteWin\":{},\"blackWin\":{} }},", rotated, used, percentw, percentb);
+                    continue;
+                }
                 loop {
                     let mut continue_search = false;
                     if current_node.next.len() == 0 {
@@ -131,7 +143,6 @@ impl Database {
                 if current_node.next.len() == 0 {
                     // Search ended
                     //TODO construct json object via serde?
-                    let mut result = String::from("[");
                     for next_coup in &current_search_node.next {
                         let stats = Database::tree_stats(&next_coup);
                         let used = stats.len();
@@ -140,18 +151,17 @@ impl Database {
                         let percentw = white_victory as f32 / used as f32;
                         let percentb = black_victory as f32 / used as f32;
                         let rotated = Rewriter::rotate_action(&next_coup.action, &invert_rotate);
-                        let id = format!("{}-{}", rotated.from, rotated.dest);
-                        result += &*format!("{{\"id\":\"{}\",\"count\":{},\"whiteWin\":{},\"blackWin\":{} }},", id, used, percentw, percentb);
+                        result += &*format!("{{\"id\":\"{}\",\"count\":{},\"whiteWin\":{},\"blackWin\":{} }},", rotated, used, percentw, percentb);
                     }
-                    if result != "[" {
-                        result.pop();
-                    }
-                    result += "]";
-                    return result;
+                    break;
                 }
             }
         }
-        String::from("{}")
+        if result != "[" {
+            result.pop();
+        }
+        result += "]";
+        result
     }
 
     pub fn stats(&self, variant: Variant) -> String {

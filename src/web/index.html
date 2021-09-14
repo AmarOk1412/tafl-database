@@ -237,8 +237,14 @@ async function searchMoves() {
     id.innerText = move['id']
     id.className = 'clickable'
     id.addEventListener("click", function () {
-      console.log(this)
-        current_search += this.innerText + " "
+        if (this.innerText.indexOf('++') != -1) {
+          return
+        }
+
+        if (current_search !== '') {
+          current_search += "\\n"
+        }
+        current_search += this.innerText
         searchMoves();
       });
     row.appendChild(id)
@@ -246,10 +252,12 @@ async function searchMoves() {
     count.innerText = move['count']
     row.appendChild(count)
     var whiteWin = document.createElement('td')
-    whiteWin.innerText = move['whiteWin']
+    whiteWin.innerText = move['whiteWin'] * 100
+    whiteWin.innerText += "%"
     row.appendChild(whiteWin)
     var blackWin = document.createElement('td')
-    blackWin.innerText = move['blackWin']
+    blackWin.innerText = move['blackWin'] * 100
+    blackWin.innerText += "%"
     row.appendChild(blackWin)
     movesArray.appendChild(row)
   }
