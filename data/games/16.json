@@ -1,0 +1,7 @@
+{
+    "variant": "copenhagenhnefatafl",
+    "white": "AmarOk",
+    "black": "Biarki",
+    "winner": "white",
+    "game": "D1-D4\nE7-C7\nD11-C11\nE5-E3\nA4-A3\nF5-D5\nD4-C4\nE6-E10\nF10-J10\nF8-C8\nB6-B10\nD5-D3\nF2-B2\nG5-I5\nH1-I1\nE3-J3\nK4-K3\nJ3-J2\nA8-A9\nH6-H1\nF1-F3\nG6-H6\nA5-F5xF4\nG7-G4\nF3-F4\nE10-E4xF4\nF5-F4\nE4-E5\nF4-F3\nH6-H3\nF3-F2\nF6-H6\nJ6-J4\nH6-H4\nK3-J3\nH4-I4\nK5-K2\nI4-I2\nF11-F8xF7\nI5-K5\nF8-F3\nK5-K3xK2"
+}
