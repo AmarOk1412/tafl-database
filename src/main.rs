@@ -4,6 +4,7 @@ mod enums;
 mod game;
 mod rewriter;
 
+extern crate iron_cors;
 extern crate rmp_serde as rmps;
 extern crate serde;
 #[macro_use]

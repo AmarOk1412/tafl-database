@@ -41,7 +41,7 @@ td, th {
   padding: 8px;
 }
 
-tr:nth-child(even) {
+thead tr, tr:nth-child(even) {
   background-color: #dddddd;
 }
 
@@ -89,6 +89,10 @@ tr:nth-child(even) {
   border-radius: 50%;
   border: 1px solid black;
 }
+
+.clickable {
+  cursor: pointer;
+}
 </style>
 
 <div id="app">
@@ -97,29 +101,39 @@ tr:nth-child(even) {
             <div id="board">
 
             </div>
-            <div>Variant/Play/Pause/Restart</div>
+            <div>
+            <select name="variant" id="variant" onchange="updatevariant()">
+              <option value="oldhnefatafl">Old Hnefatafl</option>
+              <option value="legacyhnefatafl">Legacy Hnefatafl</option>
+              <option value="copenhagenhnefatafl">Copenhagen Hnefatafl</option>
+              <option value="historicalhnefatafl">Historical Hnefatafl</option>
+              <option value="federationbrandubh">Federation Brandubh</option>
+              <option value="historicaltablut">Historical Tablut</option>
+            </select>
+            /Play/Pause/Restart</div>
         </div>
     </div>
 
     <div id="right">
         <table>
+          <thead>
             <tr>
                 <th>Moves</th>
                 <th>Count</th>
-                <th>Victories</th>
+                <th>Victories (white)</th>
+                <th>Victories (black)</th>
             </tr>
-            <tr>
-                <td>F2-F3</td>
-                <td>5</td>
-                <td>40% white</td>
-            </tr>
+          </thead>
+          <tbody id="moves">
+          </tbody>
         </table>
     </div>
 </div>
 
 <script>
 var board = document.getElementById("board");
-var size = 11;
+var movesArray = document.getElementById("moves");
+var variantCombobox = document.getElementById("variant");
 
 const old_hnefatafl = [
   'B', ' ', ' ', 'P', 'P', 'P',  'P', 'P', ' ', ' ', 'B',
@@ -137,25 +151,52 @@ const old_hnefatafl = [
 const legacy_hnefatafl = old_hnefatafl;
 const copenhagen_hnefatafl = old_hnefatafl;
 const historical_hnefatafl = [
-  ' ', ' ', ' ', ' ', 'P', 'P', 'P', ' ', ' ', ' ', ' ',
-  ' ', ' ', ' ', ' ', 'P', ' ', 'P', ' ', ' ', ' ', ' ',
-  ' ', ' ', ' ', ' ', ' ', 'P', ' ', ' ', ' ', ' ', ' ',
-  ' ', ' ', ' ', ' ', ' ', 'W', ' ', ' ', ' ', ' ', ' ',
-  'P', 'P', ' ', ' ', 'W', 'W', 'W', ' ', ' ', 'P', 'P',
-  'P', ' ', 'P', 'W', 'W', 'K', 'W', 'W', 'P', ' ', 'P',
-  'P', 'P', ' ', ' ', 'W', 'W', 'W', ' ', ' ', 'P', 'P',
-  ' ', ' ', ' ', ' ', ' ', 'W', ' ', ' ', ' ', ' ', ' ',
-  ' ', ' ', ' ', ' ', ' ', 'P', ' ', ' ', ' ', ' ', ' ',
-  ' ', ' ', ' ', ' ', 'P', ' ', 'P', ' ', ' ', ' ', ' ',
-  ' ', ' ', ' ', ' ', 'P', 'P', 'P', ' ', ' ', ' ', ' '
+  'B',  'B', 'B', 'B', 'BP', 'BP', 'BP', 'B', 'B', 'B', 'B ',
+  'B',  ' ', ' ', ' ', 'P',  ' ',  'P',  ' ', ' ', ' ', 'B ',
+  'B',  ' ', ' ', ' ', ' ',  'P',  ' ',  ' ', ' ', ' ', 'B ',
+  'B',  ' ', ' ', ' ', ' ',  'W',  ' ',  ' ', ' ', ' ', 'B ',
+  'BP', 'P', ' ', ' ', 'W',  'W',  'W',  ' ', ' ', 'P', 'BP',
+  'BP', ' ', 'P', 'W', 'W',  'K',  'W',  'W', 'P', ' ', 'BP',
+  'BP', 'P', ' ', ' ', 'W',  'W',  'W',  ' ', ' ', 'P', 'BP',
+  'B',  ' ', ' ', ' ', ' ',  'W',  ' ',  ' ', ' ', ' ', 'B ',
+  'B',  ' ', ' ', ' ', ' ',  'P',  ' ',  ' ', ' ', ' ', 'B ',
+  'B',  ' ', ' ', ' ', 'P',  ' ',  'P',  ' ', ' ', ' ', 'B ',
+  'B',  'B', 'B', 'B', 'BP', 'BP', 'BP', 'B', 'B', 'B', 'B'
+]
+const federation_brandubh = [
+  'B', ' ', ' ', 'P',  ' ', ' ', 'B',
+  ' ', ' ', ' ', 'P',  ' ', ' ', ' ',
+  ' ', ' ', ' ', 'W',  ' ', ' ', ' ',
+  'P', 'P', 'W', 'BK', 'W', 'P', 'P',
+  ' ', ' ', ' ', 'W',  ' ', ' ', ' ',
+  ' ', ' ', ' ', 'P',  ' ', ' ', ' ',
+  'B', ' ', ' ', 'P',  ' ', ' ', 'B'
+]
+const historical_tablut = [
+  'B',  'B', 'B', 'BP', 'BP', 'BP', 'B', 'B', 'B ',
+  'B',  ' ', ' ', ' ',  'P',  ' ',  ' ', ' ', 'B ',
+  'B',  ' ', ' ', ' ',  'W',  ' ',  ' ', ' ', 'B ',
+  'BP', ' ', ' ', ' ',  'W',  ' ',  ' ', ' ', 'BP',
+  'BP', 'P', 'W', 'W',  'BK', 'W',  'W', 'P', 'BP',
+  'BP', ' ', ' ', ' ',  'W',  ' ',  ' ', ' ', 'BP',
+  'B',  ' ', ' ', ' ',  'W',  ' ',  ' ', ' ', 'B ',
+  'B',  ' ', ' ', ' ',  'P',  ' ',  ' ', ' ', 'B ',
+  'B',  'B', 'B', 'BP', 'BP', 'BP', 'B', 'B', 'B'
 ]
 
+var current_search = "";
+var variant = 'oldhnefatafl';
+const variants = {'oldhnefatafl': old_hnefatafl, 'legacyhnefatafl': legacy_hnefatafl, 'copenhagenhnefatafl': copenhagen_hnefatafl, 'historicalhnefatafl': historical_hnefatafl, 'federationbrandubh': federation_brandubh, 'historicaltablut': historical_tablut};
+
 function fillBoard() {
+  var boardFromVariant = variants[variant];
+  board.innerHTML = ''
+  var size = Math.sqrt(boardFromVariant.length)
   for (var y = 0; y < size; ++y) {
     var row = document.createElement("div");
     row.className = "row";
     for (var x = 0; x < size; ++x) {
-      var model = old_hnefatafl[y*11+x]
+      var model = boardFromVariant[y*size+x]
       var square = document.createElement("div");
       var bonus = ''
       if (model.indexOf('B') != -1) {
@@ -185,7 +226,44 @@ function execute_action(action) {
 
 }
 
+async function searchMoves() {
+  var moves = await fetch(`http://127.0.0.1:1412/search/${variant}`, { method: 'POST', body: `{"moves": "${current_search}"}` })
+                      .then(response => response.json());
+
+  movesArray.innerText = ''
+  for (move of moves) {
+    var row = document.createElement('tr')
+    var id = document.createElement('td')
+    id.innerText = move['id']
+    id.className = 'clickable'
+    id.addEventListener("click", function () {
+      console.log(this)
+        current_search += this.innerText + " "
+        searchMoves();
+      });
+    row.appendChild(id)
+    var count = document.createElement('td')
+    count.innerText = move['count']
+    row.appendChild(count)
+    var whiteWin = document.createElement('td')
+    whiteWin.innerText = move['whiteWin']
+    row.appendChild(whiteWin)
+    var blackWin = document.createElement('td')
+    blackWin.innerText = move['blackWin']
+    row.appendChild(blackWin)
+    movesArray.appendChild(row)
+  }
+}
+
+function updatevariant() {
+  variant = variantCombobox.value
+  current_search = ''
+  fillBoard();
+  searchMoves();
+}
+
 fillBoard();
+searchMoves();
 
 </script>
 </html>

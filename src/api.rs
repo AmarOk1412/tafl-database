@@ -2,6 +2,8 @@ use iron::prelude::*;
 use iron::Handler;
 use iron::mime::Mime;
 use iron::status;
+use iron_cors::CorsMiddleware;
+use iron::headers::{Headers, AccessControlAllowOrigin, AccessControlAllowCredentials};
 use router::Router;
 use serde_json::{Result, Value};
 use std::io::Read;
@@ -42,8 +44,12 @@ impl API {
         router.post("/game", post_game_handler, "game");
         router.post("/search/:variant", search_handler, "search");
         info!("start API endpoint at {}", self.address);
+        let cors_middleware = CorsMiddleware::with_allow_any(); // TODO from config
+
+        let mut chain = Chain::new(router);
+        chain.link_around(cors_middleware);
         // Start router
-        Iron::new(router).http(&*self.address).unwrap();
+        Iron::new(chain).http(&*self.address).unwrap();
     }
 }
 
@@ -61,7 +67,12 @@ impl Handler for PostGameHandler {
         let v: Value = serde_json::from_str(&body).unwrap();
         self.database.lock().unwrap().add_game(&GameLoader::from_json(v));
         self.database.lock().unwrap().save();
-        return Ok(Response::with((content_type, status::Ok, "{}")));
+        let mut headers = Headers::new();
+        headers.set(AccessControlAllowOrigin::Any);
+        headers.set(AccessControlAllowCredentials);
+        let mut response = Response::with((content_type, status::Ok, "{}"));
+        response.headers = headers;
+        Ok(response)
     }
 }
 
@@ -75,10 +86,15 @@ impl Handler for SearchHandler {
         let mut body = String::new();
         request.body.read_to_string(&mut body).unwrap();
         let variant = request.extensions.get::<Router>().unwrap().find("variant").unwrap_or("");
-        info!("POST /search/{} {}", variant, body);
+        println!("POST /search/{} {}", variant, body);
 
         let v: Value = serde_json::from_str(&body).unwrap();
         let variant = GameLoader::variant_from_string(variant.to_string());
-        return Ok(Response::with((content_type, status::Ok, self.database.lock().unwrap().search(variant, v["moves"].as_str().unwrap().to_string()))));
+        let mut headers = Headers::new();
+        headers.set(AccessControlAllowOrigin::Any);
+        headers.set(AccessControlAllowCredentials);
+        let mut response = Response::with((content_type, status::Ok, self.database.lock().unwrap().search(variant, v["moves"].as_str().unwrap().to_string())));
+        response.headers = headers;
+        Ok(response)
     }
 }
