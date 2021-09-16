@@ -88,6 +88,9 @@ thead tr, tr:nth-child(even) {
   margin-top: 10%;
   border-radius: 50%;
   border: 1px solid black;
+  vertical-align: center;
+  text-align: center;
+  line-height: 1.5em;
 }
 
 .clickable {
@@ -202,7 +205,8 @@ function fillBoard() {
       if (model.indexOf('B') != -1) {
         bonus += 'base';
       }
-      square.className = `square square_${x}_${y} ${bonus}`;
+      square.id = `square_${x}_${y}`;
+      square.className = `square ${bonus}`;
       if (model.indexOf('W') != -1) {
         var white = document.createElement("div");
         white.className = "white";
@@ -214,6 +218,7 @@ function fillBoard() {
       } else if (model.indexOf('K') != -1) {
         var king = document.createElement("div");
         king.className = "king";
+        king.innerText = "👑";
         square.appendChild(king);
       }
       row.appendChild(square);
@@ -222,24 +227,51 @@ function fillBoard() {
   }
 }
 
-function execute_action(action) {
+function get_square(square) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const boardFromVariant = variants[variant];
+  const size = Math.sqrt(boardFromVariant.length)
+  return [alphabet.indexOf(square[0]), size - parseInt(square.substring(1))]
+}
 
+function execute_action(action) {
+  const regex = /(?<from>[A-Z]+[0-9]+)-(?<dest>[A-Z]+[0-9]+)x?(?<take>[A-Z0-9/]*)(\+\+)?$/
+  const found = action.match(regex)
+  // Do move
+  var sq = get_square(found.groups.from)
+  console.log(get_square(found.groups.from))
+  var squareFrom = document.getElementById(`square_${sq[0]}_${sq[1]}`)
+  var sq = get_square(found.groups.dest)
+  console.log(get_square(found.groups.dest))
+  var squareDest = document.getElementById(`square_${sq[0]}_${sq[1]}`)
+  squareDest.innerHTML = squareFrom.innerHTML
+  squareFrom.innerHTML = ''
+  // Do takes
+  if (found.groups.take !== '') {
+    const takes = found.groups.take.split('/')
+    for (take of takes) {
+      var sq = get_square(take)
+      var square = document.getElementById(`square_${sq[0]}_${sq[1]}`)
+      square.innerHTML = ''
+    }
+  }
 }
 
 async function searchMoves() {
+  movesArray.innerText = ''
   var moves = await fetch(`http://127.0.0.1:1412/search/${variant}`, { method: 'POST', body: `{"moves": "${current_search}"}` })
                       .then(response => response.json());
 
-  movesArray.innerText = ''
   for (move of moves) {
     var row = document.createElement('tr')
     var id = document.createElement('td')
     id.innerText = move['id']
     id.className = 'clickable'
     id.addEventListener("click", function () {
-        if (this.innerText.indexOf('++') != -1) {
-          return
-        }
+        //if (this.innerText.indexOf('++') != -1) {
+        //  return
+        //}
+        execute_action(this.innerText)
 
         if (current_search !== '') {
           current_search += "\\n"

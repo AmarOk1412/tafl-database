@@ -93,7 +93,7 @@ impl Rewriter {
         let mut take = Vec::new();
         let takes = String::from(cap.get(3).map_or("", |m| m.as_str()));
         if takes != "++" && takes != "" {
-            take = takes.split('/').map(|s| s.to_string()).collect();
+            take = takes.split('/').map(|s| Rewriter::rotate(s.to_string(), &rotation)).collect();
         }
 
         Action {
