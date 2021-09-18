@@ -93,6 +93,10 @@ thead tr, tr:nth-child(even) {
   line-height: 1.5em;
 }
 
+.movable {
+  background: green;
+}
+
 .clickable {
   cursor: pointer;
 }
@@ -190,6 +194,80 @@ const historical_tablut = [
 var current_search = "";
 var variant = 'oldhnefatafl';
 const variants = {'oldhnefatafl': old_hnefatafl, 'legacyhnefatafl': legacy_hnefatafl, 'copenhagenhnefatafl': copenhagen_hnefatafl, 'historicalhnefatafl': historical_hnefatafl, 'federationbrandubh': federation_brandubh, 'historicaltablut': historical_tablut};
+var currentMove = null;
+
+function startMove(pos) {
+  var boardFromVariant = variants[variant];
+  var size = Math.sqrt(boardFromVariant.length)
+  var startx = pos[0]
+  var starty = pos[1]
+
+  var square = document.getElementById(`square_${startx}_${starty}`)
+  var isMovable = square.classList.contains('movable');
+  var movables = document.querySelectorAll(".movable");
+  [].forEach.call(movables, function (el) {
+    el.className = el.className.replace(/ movable/, "");
+  });
+  if (isMovable && currentMove !== null) {
+    // End of the move
+    // TODO add action
+    // TODO capture
+    // Search
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    var start = currentMove
+    var end = pos
+    var action = `${alphabet[start[0]]}${size - start[1]}-${alphabet[end[0]]}${size - end[1]}`
+    console.log(action)
+    execute_action(action)
+    currentMove = null
+    if (current_search !== '') {
+      current_search += "\\n"
+    }
+    current_search += action
+    searchMoves();
+    return;
+  } else if (square.innerHTML === '') {
+    return;
+  } else if (pos === currentMove) {
+    currentMove = null
+    return; // Abort current move
+  } else {
+    currentMove = pos;
+  }
+
+  for (var x = startx + 1; x < size; ++x) {
+    var square = document.getElementById(`square_${x}_${starty}`)
+    if (square.innerHTML === '') {
+      square.className += ' movable'
+    } else {
+      break;
+    }
+  }
+  for (var x = startx - 1; x >= 0; --x) {
+    var square = document.getElementById(`square_${x}_${starty}`)
+    if (square.innerHTML === '') {
+      square.className += ' movable'
+    } else {
+      break;
+    }
+  }
+  for (var y = starty + 1; y < size; ++y) {
+    var square = document.getElementById(`square_${startx}_${y}`)
+    if (square.innerHTML === '') {
+      square.className += ' movable'
+    } else {
+      break;
+    }
+  }
+  for (var y = starty - 1; y >= 0; --y) {
+    var square = document.getElementById(`square_${startx}_${y}`)
+    if (square.innerHTML === '') {
+      square.className += ' movable'
+    } else {
+      break;
+    }
+  }
+}
 
 function fillBoard() {
   var boardFromVariant = variants[variant];
@@ -201,6 +279,10 @@ function fillBoard() {
     for (var x = 0; x < size; ++x) {
       var model = boardFromVariant[y*size+x]
       var square = document.createElement("div");
+      square.pos = [x, y]
+      square.addEventListener("click", function () {
+        startMove(this.pos)
+      });
       var bonus = ''
       if (model.indexOf('B') != -1) {
         bonus += 'base';
@@ -239,10 +321,8 @@ function execute_action(action) {
   const found = action.match(regex)
   // Do move
   var sq = get_square(found.groups.from)
-  console.log(get_square(found.groups.from))
   var squareFrom = document.getElementById(`square_${sq[0]}_${sq[1]}`)
   var sq = get_square(found.groups.dest)
-  console.log(get_square(found.groups.dest))
   var squareDest = document.getElementById(`square_${sq[0]}_${sq[1]}`)
   squareDest.innerHTML = squareFrom.innerHTML
   squareFrom.innerHTML = ''

@@ -133,7 +133,7 @@ impl Rewriter {
         let mut size = 11; // TODO variant
         if rotation != &Rotate::OneHundredEighty {
             let fx = y;
-            y = size - x;
+            y = size + 1 - x;
             x = fx;
         }
         if rotation != &Rotate::Ninety {
