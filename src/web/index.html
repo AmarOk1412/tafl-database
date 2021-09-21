@@ -196,6 +196,63 @@ var variant = 'oldhnefatafl';
 const variants = {'oldhnefatafl': old_hnefatafl, 'legacyhnefatafl': legacy_hnefatafl, 'copenhagenhnefatafl': copenhagen_hnefatafl, 'historicalhnefatafl': historical_hnefatafl, 'federationbrandubh': federation_brandubh, 'historicaltablut': historical_tablut};
 var currentMove = null;
 
+function isSquare(square, cn) {
+  return square && square.childNodes.length !== 0 && square.childNodes[0].classList.contains(cn)
+}
+
+function check_capture(oldPos, newPos) {
+  // Check if oldPos = white or black or king
+  var square = document.getElementById(`square_${oldPos[0]}_${oldPos[1]}`)
+  const isWhite = isSquare(square, 'white');
+
+  var taken = []
+  var captureKing = false;
+  // Check if nearest squares are surrounded per hostile
+  var modifiers = [[-1,0],[1,0],[0,-1],[0,1]];
+  for (m of modifiers) {
+    var square = document.getElementById(`square_${newPos[0] + m[0]}_${newPos[1] + m[1]}`)
+    if (isSquare(square, 'king')) {
+      for (m2 of modifiers) {
+        var squareC = document.getElementById(`square_${newPos[0] + m[0] + m2[0]}_${newPos[1] + m[1] + m2[1]}`)
+        captureKing |= isSquare(squareC, 'black');
+        if (!captureKing)
+          break;
+      }
+      if (captureKing) {
+        taken.push([newPos[0] + m[0], newPos[1] + m[1]])
+      }
+    } else if (isSquare(square, isWhite ? 'black' : 'white')) {
+      var square = document.getElementById(`square_${newPos[0] + 2 * m[0]}_${newPos[1] + 2 * m[1]}`)
+      if (isSquare(square, isWhite ? 'white' : 'black')) {
+        taken.push([newPos[0] + m[0], newPos[1] + m[1]])
+      }
+    }
+  }
+
+  if (taken.length === 0)
+    return ''
+  var result = 'x'
+  for (var i = 0; i < taken.length; ++i) {
+    result += squareFromPos(taken[i])
+    if (i !== taken.length - 1) {
+      result += '/'
+    }
+  }
+  if (captureKing) {
+    result += '++'
+  }
+  return result
+
+  // TODO VARIANTS. King armed, Here base = hostile, 2 hostile = taken, except the king
+}
+
+function squareFromPos(pos) {
+  var boardFromVariant = variants[variant];
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  var size = Math.sqrt(boardFromVariant.length)
+  return `${alphabet[pos[0]]}${size - pos[1]}`
+}
+
 function startMove(pos) {
   var boardFromVariant = variants[variant];
   var size = Math.sqrt(boardFromVariant.length)
@@ -210,16 +267,12 @@ function startMove(pos) {
   });
   if (isMovable && currentMove !== null) {
     // End of the move
-    // TODO add action
-    // TODO capture
-    // Search
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     var start = currentMove
     var end = pos
-    var action = `${alphabet[start[0]]}${size - start[1]}-${alphabet[end[0]]}${size - end[1]}`
-    console.log(action)
+    var action = `${squareFromPos(start)}-${squareFromPos(end)}${check_capture(start, end)}`
     execute_action(action)
     currentMove = null
+    // add action
     if (current_search !== '') {
       current_search += "\\n"
     }
@@ -299,7 +352,7 @@ function fillBoard() {
         square.appendChild(black);
       } else if (model.indexOf('K') != -1) {
         var king = document.createElement("div");
-        king.className = "king";
+        king.className = "king white";
         king.innerText = "👑";
         square.appendChild(king);
       }

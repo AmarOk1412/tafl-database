@@ -1,0 +1,7 @@
+{
+    "variant": "legacyhnefatafl",
+    "white": "Con",
+    "black": "AmarOk",
+    "winner": "black",
+    "game": "J6-J10\nH6-H8\nF2-J2\nD6-D10\nD1-D9xD10\nE7-E8\nF10-B10\nE5-C5\nB6-B2\nC5-C1\nA4-A3\nE6-D6\nD11-C11\nD6-D1\nA6-D6\nF6-E6\nE1-E3\nE8-C8\nA7-C7\nC8-B8\nC7-C8xB8\nF7-C7\nD6-C6xC7\nE6-D6\nA5-D5\nF4-D4\nE3-D3xD4\nF5-E5\nF1-F5xE5\nF8-E8\nK5-H5xG5\nE8-E5\nK6-H6xG6\nC1-C5xD5\nD3-D5xE5\nG7-E7\nB10-B5xC5\nH8-G8\nH6-E6\nE7-D7\nB5-B7\nG8-G3\nE11-E7\nG3-B3\nB7-C7xD7\nD6-D8\nK8-E8\nD8-D7\nD9-D8\nD7-D6\nD8-D7xD6++"
+}
