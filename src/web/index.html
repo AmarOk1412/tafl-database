@@ -1,5 +1,29 @@
 <html>
 <style>
+/*
+Umber 594E36
+Snow FCF7F8
+Grey CED3DC
+Teal Blue 4E8098
+Pale cerulan 90C2E7
+Green 21A179
+Purple 830A48
+Outrageous orange FF785A
+*/
+
+/*
+4C5760 black coral
+93A8AC Pewler blue
+D7CEB2 bone
+A59E8C grulto
+66635B Dim grey
+D84727 vermillon
+*/
+
+html {
+  background: #4C5760;
+}
+
 #app {
   box-sizing: border-box;
 }
@@ -17,11 +41,6 @@
   float: left;
   width: 50%;
   height: 100%;
-}
-
-#monitorgame {
-    width: 50%;
-    height: 50%;
 }
 
 #board {
@@ -46,23 +65,26 @@ thead tr, tr:nth-child(even) {
 }
 
 .row {
-  width: 100%;
   display: flex;
-  height: 9%;
 }
 
 .square {
-  border: 1px solid grey;
-  width: 9%;
-  background: #eee;
+  border: 1px solid #66635B;
+  width: 2vw;
+  height: 2vw;
+  background: #D7CEB2;
+}
+
+.square:hover {
+  background: #A59E8C;
 }
 
 .base {
-  background: red;
+  background: #66635B;
 }
 
 .white {
-  background: white;
+  background: #D84727;
   width: 80%;
   height: 80%;
   margin: auto;
@@ -72,7 +94,7 @@ thead tr, tr:nth-child(even) {
 }
 
 .black {
-  background: black;
+  background: #4C5760;
   width: 80%;
   height: 80%;
   margin: auto;
@@ -81,7 +103,7 @@ thead tr, tr:nth-child(even) {
 }
 
 .king {
-  background: white;
+  background: #D84727;
   width: 80%;
   height: 80%;
   margin: auto;
@@ -94,7 +116,7 @@ thead tr, tr:nth-child(even) {
 }
 
 .movable {
-  background: green;
+  background: #B5AE9C;
 }
 
 .clickable {
@@ -141,6 +163,10 @@ thead tr, tr:nth-child(even) {
 var board = document.getElementById("board");
 var movesArray = document.getElementById("moves");
 var variantCombobox = document.getElementById("variant");
+
+var captureSound = new Audio('capture.ogg');
+var confirmationSound = new Audio('confirmation.ogg');
+var moveSound = new Audio('move.ogg');
 
 const old_hnefatafl = [
   'B', ' ', ' ', 'P', 'P', 'P',  'P', 'P', ' ', ' ', 'B',
@@ -214,7 +240,7 @@ function check_capture(oldPos, newPos) {
     if (isSquare(square, 'king')) {
       for (m2 of modifiers) {
         var squareC = document.getElementById(`square_${newPos[0] + m[0] + m2[0]}_${newPos[1] + m[1] + m2[1]}`)
-        captureKing |= isSquare(squareC, 'black');
+        captureKing |= isSquare(squareC, 'black') | square.classList.contains('base');
         if (!captureKing)
           break;
       }
@@ -223,7 +249,7 @@ function check_capture(oldPos, newPos) {
       }
     } else if (isSquare(square, isWhite ? 'black' : 'white')) {
       var square = document.getElementById(`square_${newPos[0] + 2 * m[0]}_${newPos[1] + 2 * m[1]}`)
-      if (isSquare(square, isWhite ? 'white' : 'black')) {
+      if (isSquare(square, isWhite ? 'white' : 'black') || square.classList.contains('base')) {
         taken.push([newPos[0] + m[0], newPos[1] + m[1]])
       }
     }
@@ -288,8 +314,13 @@ function startMove(pos) {
     currentMove = pos;
   }
 
+  var isKing = isSquare(square, 'king')
+
   for (var x = startx + 1; x < size; ++x) {
     var square = document.getElementById(`square_${x}_${starty}`)
+    if (square.classList.contains("base") && !isKing) {
+      continue;
+    }
     if (square.innerHTML === '') {
       square.className += ' movable'
     } else {
@@ -298,6 +329,9 @@ function startMove(pos) {
   }
   for (var x = startx - 1; x >= 0; --x) {
     var square = document.getElementById(`square_${x}_${starty}`)
+    if (square.classList.contains("base") && !isKing) {
+      continue;
+    }
     if (square.innerHTML === '') {
       square.className += ' movable'
     } else {
@@ -306,6 +340,9 @@ function startMove(pos) {
   }
   for (var y = starty + 1; y < size; ++y) {
     var square = document.getElementById(`square_${startx}_${y}`)
+    if (square.classList.contains("base") && !isKing) {
+      continue;
+    }
     if (square.innerHTML === '') {
       square.className += ' movable'
     } else {
@@ -314,6 +351,9 @@ function startMove(pos) {
   }
   for (var y = starty - 1; y >= 0; --y) {
     var square = document.getElementById(`square_${startx}_${y}`)
+    if (square.classList.contains("base") && !isKing) {
+      continue;
+    }
     if (square.innerHTML === '') {
       square.className += ' movable'
     } else {
@@ -370,7 +410,7 @@ function get_square(square) {
 }
 
 function execute_action(action) {
-  const regex = /(?<from>[A-Z]+[0-9]+)-(?<dest>[A-Z]+[0-9]+)x?(?<take>[A-Z0-9/]*)(\+\+)?$/
+  const regex = /(?<from>[A-Z]+[0-9]+)-(?<dest>[A-Z]+[0-9]+)x?(?<take>[A-Z0-9/]*)(?<won>\+\+)?$/
   const found = action.match(regex)
   // Do move
   var sq = get_square(found.groups.from)
@@ -387,6 +427,15 @@ function execute_action(action) {
       var square = document.getElementById(`square_${sq[0]}_${sq[1]}`)
       square.innerHTML = ''
     }
+  }
+
+  // play related sound
+  if (found.groups.won) {
+    confirmationSound.play();
+  } else if (found.groups.take !== '') {
+    captureSound.play();
+  } else {
+    moveSound.play();
   }
 }
 

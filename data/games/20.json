@@ -1,0 +1,8 @@
+{
+    "variant": "oldhnefatafl",
+    "white": "AmarOk",
+    "black": "Njord",
+    "winner": "black",
+    "game": "D1-D3\nF4-C4\nA4-B4\nE5-B5\nA7-C7\nF8-C8\nD3-C3\nC4-C6xC7\nB6-B9\nB5-D5\nF2-D2\nF5-F3\nH1-H3\nG5-I5\nK4-I4\nG7-G9\nJ6-I6xI5\nF6-F5\nK5-J5\nG9-J9\nK8-K9\nJ9-J10\nH11-J11\nJ10-G10\nF10-C10\nF7-I7\nG11-I11\nG10-J10\nK9-J9xJ10\nF5-F10\nJ11-J10\nC8-K8\nJ9-K9xK8\nF3-F2\nG1-G2++"
+}
+
