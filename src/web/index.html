@@ -25,27 +25,24 @@ html {
 }
 
 #app {
-  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+#monitorgame {
+  background: #FCF7F8;
+  display: flex;
+  padding: 20px;
+  margin: auto;
 }
 
 #left {
-  float: left;
-  width: 50%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 #right {
-  float: left;
-  width: 50%;
-  height: 100%;
-}
-
-#board {
-    width: 100%;
-    height: 100%;
+  margin-left: 20px;
 }
 
 table {
@@ -122,42 +119,57 @@ thead tr, tr:nth-child(even) {
 .clickable {
   cursor: pointer;
 }
+
+.progressbar {
+  background: black;
+  border-radius: 2px;
+  height: 24px;
+  border: 1px solid black;
+}
+
+.progressbar>div {
+  height: 100%;
+  background: white;
+}
 </style>
 
 <div id="app">
+  <div id="monitorgame">
     <div id="left">
-        <div id="monitorgame">
-            <div id="board">
+      <div id="board">
 
-            </div>
-            <div>
-            <select name="variant" id="variant" onchange="updatevariant()">
-              <option value="oldhnefatafl">Old Hnefatafl</option>
-              <option value="legacyhnefatafl">Legacy Hnefatafl</option>
-              <option value="copenhagenhnefatafl">Copenhagen Hnefatafl</option>
-              <option value="historicalhnefatafl">Historical Hnefatafl</option>
-              <option value="federationbrandubh">Federation Brandubh</option>
-              <option value="historicaltablut">Historical Tablut</option>
-            </select>
-            /Play/Pause/Restart</div>
-        </div>
+      </div>
     </div>
-
+    
     <div id="right">
-        <table>
-          <thead>
-            <tr>
-                <th>Moves</th>
-                <th>Count</th>
-                <th>Victories (white)</th>
-                <th>Victories (black)</th>
-            </tr>
-          </thead>
-          <tbody id="moves">
-          </tbody>
-        </table>
+      <table>
+        <thead>
+          <tr>
+            <th>Moves</th>
+            <th>Count</th>
+            <th>Victories</th>
+          </tr>
+        </thead>
+        <tbody id="moves">
+        </tbody>
+      </table>
     </div>
+  </div>
 </div>
+
+<!--
+
+      <div>
+      <select name="variant" id="variant" onchange="updatevariant()">
+        <option value="oldhnefatafl">Old Hnefatafl</option>
+        <option value="legacyhnefatafl">Legacy Hnefatafl</option>
+        <option value="copenhagenhnefatafl">Copenhagen Hnefatafl</option>
+        <option value="historicalhnefatafl">Historical Hnefatafl</option>
+        <option value="federationbrandubh">Federation Brandubh</option>
+        <option value="historicaltablut">Historical Tablut</option>
+      </select>
+      </div>
+-->
 
 <script>
 var board = document.getElementById("board");
@@ -226,6 +238,10 @@ function isSquare(square, cn) {
   return square && square.childNodes.length !== 0 && square.childNodes[0].classList.contains(cn)
 }
 
+function isBase(square) {
+  return square && square.classList.contains('base')
+}
+
 function check_capture(oldPos, newPos) {
   // Check if oldPos = white or black or king
   var square = document.getElementById(`square_${oldPos[0]}_${oldPos[1]}`)
@@ -240,7 +256,7 @@ function check_capture(oldPos, newPos) {
     if (isSquare(square, 'king')) {
       for (m2 of modifiers) {
         var squareC = document.getElementById(`square_${newPos[0] + m[0] + m2[0]}_${newPos[1] + m[1] + m2[1]}`)
-        captureKing |= isSquare(squareC, 'black') | square.classList.contains('base');
+        captureKing |= isSquare(squareC, 'black') || isBase(square);
         if (!captureKing)
           break;
       }
@@ -249,7 +265,7 @@ function check_capture(oldPos, newPos) {
       }
     } else if (isSquare(square, isWhite ? 'black' : 'white')) {
       var square = document.getElementById(`square_${newPos[0] + 2 * m[0]}_${newPos[1] + 2 * m[1]}`)
-      if (isSquare(square, isWhite ? 'white' : 'black') || square.classList.contains('base')) {
+      if (isSquare(square, isWhite ? 'white' : 'black') || isBase(square)) {
         taken.push([newPos[0] + m[0], newPos[1] + m[1]])
       }
     }
@@ -465,14 +481,14 @@ async function searchMoves() {
     var count = document.createElement('td')
     count.innerText = move['count']
     row.appendChild(count)
-    var whiteWin = document.createElement('td')
-    whiteWin.innerText = move['whiteWin'] * 100
-    whiteWin.innerText += "%"
-    row.appendChild(whiteWin)
-    var blackWin = document.createElement('td')
-    blackWin.innerText = move['blackWin'] * 100
-    blackWin.innerText += "%"
-    row.appendChild(blackWin)
+    var victory = document.createElement('td')
+    var progressBar = document.createElement('div')
+    progressBar.className = 'progressbar'
+    var progress = document.createElement('div')
+    progress.style.width = `${move['whiteWin'] * 100}%`
+    progressBar.appendChild(progress)
+    victory.appendChild(progressBar)
+    row.appendChild(victory)
     movesArray.appendChild(row)
   }
 }
